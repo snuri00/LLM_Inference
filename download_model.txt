@@ -1,0 +1,10 @@
+pip install huggingface_hub
+
+python3 -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='DavidAU/Qwen3-42B-A3B-2507-Thinking-Abliterated-uncensored-TOTAL-RECALL-v2-Medium-MASTER-CODER',
+    local_dir='/home/sn/Desktop/Entertainment/LLM_Inference/model',
+    ignore_patterns=['*.gguf', '*.bin', '*.pt'],
+)
+"
