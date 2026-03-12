@@ -60,7 +60,7 @@ class LayerLoader:
         shard_dir: Path,
         device: str = "cuda",
         pin_memory: bool = True,
-        cpu_cache_mb: float = 20000.0,
+        cpu_cache_mb: float = 12000.0,
     ):
         self._shard_dir = shard_dir
         self._device = device
@@ -91,19 +91,17 @@ class LayerLoader:
             seen.add(key)
             tensor, quant_state = load_quantized_tensor(raw_tensors, key)
             if quant_state is not None:
-                tensor = tensor.cuda()
+                gpu_tensor = tensor.cuda()
                 quant_state.absmax = quant_state.absmax.cuda()
-                tensor = dequantize_tensor_nf4(tensor, quant_state)
+                tensor = dequantize_tensor_nf4(gpu_tensor, quant_state)
                 tensor = tensor.reshape(quant_state.shape).to(torch.float16).cpu()
+                del gpu_tensor
                 torch.cuda.empty_cache()
             else:
                 tensor = tensor.to(torch.float16)
-            if self._pin_memory:
-                pinned = torch.empty(tensor.shape, dtype=tensor.dtype, pin_memory=True)
-                pinned.copy_(tensor)
-                tensor = pinned
             result[key] = (tensor, None)
 
+        del raw_tensors
         self._cpu_cache.put(shard_name, result)
         return result
 
